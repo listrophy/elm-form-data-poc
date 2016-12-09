@@ -8,33 +8,30 @@ import Models exposing (Model)
 import Messages exposing (Msg(..))
 import FormData exposing (FormData)
 import RemoteData
+import Api
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case Debug.log "msg" msg of
-    ChangeNewSiteName str ->
+    ChangeNewSiteName newName ->
       let
-          newSite_ = FormData.map (\m->{m|name = str}) model.newSite
+          newSite_ = FormData.map (\m->{m|name = newName}) model.newSite
       in
          {model | newSite = newSite_} ! []
 
-    ChangeNewSiteUrl str ->
-       let
-           newSite_ = FormData.map (\m->{m | url = str }) model.newSite
-       in
-          {model | newSite = newSite_} ! []
+    ChangeNewSiteUrl newUrl ->
+      { model
+      | newSite = FormData.map (\m->{m|url = newUrl }) model.newSite
+      } ! []
 
     ToggleNewSiteEnabled newVal ->
        let
-           newSite_ = FormData.map (\m->{m | enabled = newVal }) model.newSite
+           newSite_ = FormData.map (\m->{m|enabled = newVal }) model.newSite
        in
           {model | newSite = newSite_} ! []
 
     SubmitNewSite ->
-      model ! [submitNewSite model]
-
-    TriedFetchSites response ->
-      {model | sites = response} ! []
+      model ! [Api.submitNewSite model.newSite]
 
     TriedSubmitNewSite (FormData.Succeeded resp wrapped) ->
       let
@@ -46,24 +43,5 @@ update msg model =
     TriedSubmitNewSite response ->
       {model | newSite = response} ! []
 
-submitNewSite : Model -> Cmd Msg
-submitNewSite model =
-  let
-      siteBody =
-        JE.object
-          [ ("name", JE.string (FormData.get .name model.newSite))
-          , ("url", JE.string (FormData.get .url model.newSite))
-          , ("enabled", JE.bool (FormData.get .enabled model.newSite))
-          ]
-
-      body =
-        Http.jsonBody <|
-          JE.object
-            [ ("site", siteBody) ]
-
-      decoder =
-        JD.field "site" <|
-          JD.field "id" JD.int
-  in
-    Http.post "http://localhost:8080/api/sites" body decoder
-      |> Http.send (TriedSubmitNewSite << FormData.fromResult model.newSite)
+    TriedFetchSites response ->
+      {model | sites = response} ! []

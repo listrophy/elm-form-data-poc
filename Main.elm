@@ -5,16 +5,16 @@ import Html exposing (Html, text)
 import RemoteData exposing (RemoteData(..), WebData)
 
 import Models exposing (..)
-import Messages exposing (..)
-import Sites.View
-import FetchSites
+import Messages exposing (Msg)
+import View
+import Api
 import Update
 
 main =
   Html.program
     { init = init
     , update = Update.update
-    , view = view
+    , view = View.view
     , subscriptions = always Sub.none
     }
 
@@ -23,11 +23,5 @@ main =
 init : (Model, Cmd Msg)
 init =
   initModel !
-    [ FetchSites.fetchSites
+    [ Api.fetchSites
     ]
-
--- view
-
-view : Model -> Html Msg
-view model =
-  Sites.View.view model
